@@ -16,7 +16,10 @@ servers:
   - url: https://api.simwood.com/v3
 tags:
   - name: account-management
+  - name: outbound-voice
+  - name: numbers
   - name: tools
+  - name: files
 paths:
   /tools/myip:
     get:
@@ -127,6 +130,12 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/OutboundTrunk'
+        400:
+          description: Failure
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Errors'
     delete:
       tags: [outbound-voice]
       summary: Delete the trunk
@@ -196,6 +205,150 @@ paths:
       responses:
         200:
           description: Success
+  /numbers/{account}/ranges:
+    parameters:
+      - name: account
+        in: path
+        required: true
+        schema:
+          type: string
+    get:
+      tags: [numbers]
+      summary: Retrieves a list of all available number ranges, including descriptions
+      operationId: getNumberRanges
+      security:
+        - BasicAuth: []
+      responses:
+        200:
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NumberRangesResponse'
+  /numbers/{account}/available/{tier}/{number}:
+    parameters:
+      - name: account
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: tier
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: number
+        in: path
+        required: true
+        schema:
+          type: integer
+    get:
+      tags: [numbers]
+      summary: Returns 1,10 or 100 numbers available for allocation matching the pattern specified
+      operationId: getAvailableNumbers
+      security:
+        - BasicAuth: []
+      responses:
+        200:
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AvailableNumbersResponse'
+  /numbers/{account}/allocated/all:
+    parameters:
+      - name: account
+        in: path
+        required: true
+        schema:
+          type: string
+    post:
+      tags: [numbers]
+      summary: Request a report of all current allocated numbers on account
+      operationId: getAllocatedNumbers
+      security:
+        - BasicAuth: []
+      responses:
+        200:
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AllocatedNumbersResponse'
+  /numbers/{account}/allocated/{number}:
+    parameters:
+      - name: account
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: number
+        in: path
+        required: true
+        schema:
+          type: string
+    get:
+      tags: [numbers]
+      summary: Return configuration information on allocated number
+      operationId: getAllocatedNumber
+      security:
+        - BasicAuth: []
+      responses:
+        200:
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AllocatedNumberResponse'
+        404:
+          description: Number not allocated
+    put:
+      tags: [numbers]
+      summary: Allocate an available number to the account
+      operationId: putAllocatedNumber
+      security:
+        - BasicAuth: []
+      responses:
+        200:
+          description: Success
+        404:
+          description: Number not available
+    delete:
+      tags: [numbers]
+      summary: De-configure and irrevocably remove number from account
+      operationId: deleteAllocatedNumber
+      security:
+        - BasicAuth: []
+      responses:
+        200:
+          description: Success
+        404:
+          description: Number not allocated
+  # /files/{account}/{hash}:
+  #   parameters:
+  #     - name: account
+  #       in: path
+  #       required: true
+  #       schema:
+  #         type: string
+  #     - name: hash
+  #       in: path
+  #       required: true
+  #       schema:
+  #         type: string
+  #   post:
+  #     tags: [files]
+  #     summary: Get a file, such as a previously-generated report
+  #     operationId: getFile
+  #     security:
+  #       - BasicAuth: []
+  #     responses:
+  #       200:
+  #         description: Success
+  #         content:
+  #           application/json:
+  #             schema:
+  #               ...
 components:
   securitySchemes:
     BasicAuth:
@@ -306,3 +459,148 @@ components:
           type: string
         timestamp:
           type: string
+    NumberRangesResponse:
+      type: object
+      required: [success, data]
+      properties:
+        success:
+          type: boolean
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/NumberRange'
+    NumberRange:
+      type: object
+      required: [id, prefix, sabc, description, chargeband]
+      properties:
+        id:
+          type: string
+        prefix:
+          type: string
+        sabc:
+          type: string
+        description:
+          type: string
+        chargeband:
+          type: string
+    AvailableNumbersResponse:
+      type: array
+      items:
+        $ref: '#/components/schemas/AvailableNumber'
+    AvailableNumber:
+      type: object
+      properties:
+        country_code:
+          type: string
+        number:
+          type: string
+        block:
+          type: string
+        bill_class:
+          type: string
+        SMS:
+          type: integer
+        recommended_gold_premium:
+          type: number
+        wholesale_gold_premium:
+          type: number
+    AllocatedNumbersResponse:
+      type: object
+      required: [type, account, format, hash, link]
+      properties:
+        type:
+          type: string
+        account:
+          type: string
+        format:
+          type: string
+        hash:
+          type: string
+        link:
+          type: string
+        include_mobile_ott:
+          type: boolean
+    # AllocatedNumbersFile:
+    #   type: array
+    #   items:
+    #     $ref: '#/components/schemas/AllocatedNumbersFileEntry'
+    # AllocatedNumbersFileEntry:
+    #   type: object
+    #   required: [country_code, number]
+    #   properties:
+    #     country_code:
+    #       type: string
+    #     number:
+    #       type: string
+    #     block:
+    #       type: string
+    #     type:
+    #       type: string
+    #     SMS:
+    #       type: integer
+    #     gold_price:
+    #       type: string
+    AllocatedNumberResponse:
+      type: object
+      required: [basic, voice, fax, sms, '999']
+      properties:
+        basic:
+          $ref: '#/components/schemas/AllocatedNumberBasic'
+        voice:
+          $ref: '#/components/schemas/AllocatedNumberVoice'
+        fax:
+          $ref: '#/components/schemas/AllocatedNumberFax'
+        sms:
+          $ref: '#/components/schemas/AllocatedNumberSms'
+        '999':
+          $ref: '#/components/schemas/AllocatedNumber999'
+    AllocatedNumberBasic:
+      type: object
+      required: [link, country_code, number]
+      properties:
+        link:
+          type: string
+        country_code:
+          type: string
+        number:
+          type: string
+        block:
+          type: string
+        bill_class:
+          type: string
+        SMS:
+          type: integer
+        # recommend_gold_premium
+        # wholesale_gold_premium
+    AllocatedNumberVoice:
+      type: object
+      required: [link]
+      properties:
+        link:
+          type: string
+    AllocatedNumberFax:
+      type: object
+      required: [link]
+      properties:
+        link:
+          type: string
+    AllocatedNumberSms:
+      type: object
+      required: [link]
+      properties:
+        link:
+          type: string
+    AllocatedNumber999:
+      type: object
+      required: [link]
+      properties:
+        link:
+          type: string
+    Errors:
+      type: object
+      required: [errors]
+      properties:
+        errors:
+          type: array
+          items:
+            type: string

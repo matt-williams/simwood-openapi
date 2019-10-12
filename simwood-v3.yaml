@@ -83,37 +83,119 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/OutboundTrunksResponse'
-
-
-
-#      security:
-#      - petstore_auth:
-#        - write:pets
-#        - read:pets
-#    post:
-#      tags:
-#      - pet
-#      summary: Add a new pet to the store
-#      operationId: addPet
-#      requestBody:
-#        description: Pet object that needs to be added to the store
-#        content:
-#          application/json:
-#            schema:
-#              $ref: '#/components/schemas/Pet'
-#          application/xml:
-#            schema:
-#              $ref: '#/components/schemas/Pet'
-#        required: true
-#      responses:
-#        405:
-#          description: Invalid input
-#          content: {}
-#      security:
-#      - petstore_auth:
-#        - write:pets
-#        - read:pets
-#
+  /voice/{account}/outbound/{trunk}:
+    parameters:
+      - name: account
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: trunk
+        in: path
+        required: true
+        schema:
+          type: string
+    get:
+      tags: [outbound-voice]
+      summary: Request information of specified trunk
+      operationId: getOutboundTrunk
+      security:
+        - BasicAuth: []
+      responses:
+        200:
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OutboundTrunk'
+    put:
+      tags: [outbound-voice]
+      summary: Create new trunk or update existing trunk
+      operationId: putOutboundTrunk
+      security:
+        - BasicAuth: []
+      requestBody:
+        description: Trunk to create or update
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/OutboundTrunk"
+      responses:
+        200:
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OutboundTrunk'
+    delete:
+      tags: [outbound-voice]
+      summary: Delete the trunk
+      operationId: deleteOutboundTrunk
+      security:
+        - BasicAuth: []
+      responses:
+        200:
+          description: Success
+  /voice/{account}/outbound/{trunk}/acl:
+    parameters:
+      - name: account
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: trunk
+        in: path
+        required: true
+        schema:
+          type: string
+    get:
+      tags: [outbound-voice]
+      summary: Request information of specified trunk
+      operationId: getOutboundAclIps
+      security:
+        - BasicAuth: []
+      responses:
+        200:
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OutboundAclIps'
+  /voice/{account}/outbound/{trunk}/acl/{ip}:
+    parameters:
+      - name: account
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: trunk
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: ip
+        in: path
+        required: true
+        schema:
+          type: string
+    put:
+      tags: [outbound-voice]
+      summary: Add IP to ACL-based trunk
+      operationId: putOutboundAclIp
+      security:
+        - BasicAuth: []
+      responses:
+        200:
+          description: Success
+    delete:
+      tags: [outbound-voice]
+      summary: Remove IP from ACL-based trunk
+      operationId: deleteOutboundAclIp
+      security:
+        - BasicAuth: []
+      responses:
+        200:
+          description: Success
 components:
   securitySchemes:
     BasicAuth:
@@ -160,8 +242,8 @@ components:
     OutboundTrunksResponse:
       type: array
       items:
-        $ref: '#/components/schemas/OutboundTrunk'
-    OutboundTrunk:
+        $ref: '#/components/schemas/OutboundTrunkSummary'
+    OutboundTrunkSummary:
       type: object
       required: [trunk, serviceLevel, type]
       properties:
@@ -170,4 +252,57 @@ components:
         serviceLevel:
           type: string
         type:
+          type: string
+        # enabled_webrtc
+    OutboundTrunk:
+      type: object
+      properties:
+        trunk:
+          type: string
+        type:
+          type: string
+        enabled:
+          type: string
+        enabled_in:
+          type: string
+        enabled_out:
+          type: string
+        # enabled_webrtc
+        user:
+          type: string
+        quality:
+          type: string
+        limit_concurrent_out:
+          type: string
+        limit_rate_out:
+          type: string
+        # limit_concurrent_out_international
+        # limit_rate_out_international
+        # limit_concurrent_out_international_hotspot
+        limit_rate_out_international_hotspot:
+          type: string
+        # limit_concurrent_out_per_number
+        # max_cpc
+        # max_cpm
+        # max_cost
+        # max_dur
+        # limit_concurrent_in
+        # access_codes_enabled
+        # dq_enabled
+        # cli_default
+        cli_force_default:
+          type: string
+        # nni_default
+        # cli_format
+        # cli_policy
+    OutboundAclIps:
+      type: array
+      items:
+        $ref: '#/components/schemas/OutboundAclIp'
+    OutboundAclIp:
+      type: object
+      properties:
+        ip:
+          type: string
+        timestamp:
           type: string

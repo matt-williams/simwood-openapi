@@ -248,6 +248,11 @@ paths:
       operationId: getAvailableNumbers
       security:
         - BasicAuth: []
+      parameters:
+        - name: pattern
+          in: query
+          schema:
+            type: string
       responses:
         200:
           description: Success

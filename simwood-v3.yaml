@@ -119,6 +119,7 @@ paths:
         - BasicAuth: []
       requestBody:
         description: Trunk to create or update
+        required: true
         content:
           application/json:
             schema:
@@ -237,11 +238,13 @@ paths:
         required: true
         schema:
           type: string
+          example: all
       - name: number
         in: path
         required: true
         schema:
           type: integer
+          example: 1
     get:
       tags: [numbers]
       summary: Returns 1,10 or 100 numbers available for allocation matching the pattern specified
@@ -329,6 +332,65 @@ paths:
           description: Success
         404:
           description: Number not allocated
+  /numbers/{account}/allocated/{number}/config:
+    parameters:
+      - name: account
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: number
+        in: path
+        required: true
+        schema:
+          type: string
+    get:
+      tags: [numbers]
+      summary: Return configuration information on allocated number
+      operationId: getNumberConfig
+      security:
+        - BasicAuth: []
+      responses:
+        200:
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NumberConfig'
+        404:
+          description: Number not allocated
+    put:
+      tags: [numbers]
+      summary: Replace active configuration for number
+      operationId: putNumberConfig
+      security:
+        - BasicAuth: []
+      requestBody:
+        description: New number configuration
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/NumberConfig'
+      responses:
+        200:
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PutNumberConfigResponse'
+        404:
+          description: Number not allocated
+    delete:
+      tags: [numbers]
+      summary: De-configure the configuration of number
+      operationId: deleteNumberConfig
+      security:
+        - BasicAuth: []
+      responses:
+        200:
+          description: Success
+        404:
+          description: Number not allocated
   # /files/{account}/{hash}:
   #   parameters:
   #     - name: account
@@ -379,7 +441,7 @@ components:
           format: int32
     AccountTypeResponse:
       type: object
-      required: [success, data]
+      required: [success]
       properties:
         success:
           type: boolean
@@ -466,7 +528,7 @@ components:
           type: string
     NumberRangesResponse:
       type: object
-      required: [success, data]
+      required: [success]
       properties:
         success:
           type: boolean
@@ -601,6 +663,53 @@ components:
       properties:
         link:
           type: string
+    NumberConfig:
+      type: object
+      properties:
+        options:
+          $ref: '#/components/schemas/NumberConfigOptions'
+        # rules
+        routing:
+          type: object
+          additionalProperties:
+            type: array
+            items:
+              type: array
+              items:
+                $ref: '#/components/schemas/RoutingEntry'
+        # meta:
+    NumberConfigOptions:
+      type: object
+      properties:
+        enabled:
+          type: boolean
+        block_payphone:
+          type: boolean
+        acr:
+          type: boolean
+        icr:
+          type: boolean
+        beta_in:
+          type: boolean
+    RoutingEntry:
+      type: object
+      properties:
+        type:
+          type: string
+          default: sip
+        endpoint:
+          type: string
+        sdes:
+          type: string
+          default: none
+    PutNumberConfigResponse:
+      type: object
+      required: [success]
+      properties:
+        success:
+          type: boolean
+        errors:
+          $ref: '#/components/schemas/Errors'
     Errors:
       type: object
       required: [errors]
